@@ -62,6 +62,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Content Include="letraU.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
   </ItemGroup>

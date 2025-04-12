@@ -23,7 +23,10 @@ namespace LetraU
         {
             base.OnLoad(e);
             GL.ClearColor(0.0f, 0.0f, 0.5f, 1.0f);
-            escenario = new Escenario(GenerarEscenario(), new Vector3(0, 0, 0));
+            var objetos = new Dictionary<string, Objeto>();
+            var objU = CargarObjetoDesdeJSON("letraU.json", new Vector3(-2f, 0f, 0f));
+            objetos.Add("U1", objU);
+            escenario = new Escenario(objetos, new Vector3(0, 0, 0));
         }
 
         protected override void OnResize(EventArgs e)
@@ -131,10 +134,13 @@ namespace LetraU
         }
      private Objeto CargarObjetoDesdeJSON(string path, Vector3 posicion)
         {
-            string json = File.ReadAllText(path);
-            EscenarioData data = JsonConvert.DeserializeObject<EscenarioData>(json);
+            try
+            {
+                Console.WriteLine("Buscando archivo en: " + Path.GetFullPath(path));
+                string json = File.ReadAllText(path);
+                EscenarioData data = JsonConvert.DeserializeObject<EscenarioData>(json);
 
-            var objeto = new Objeto(new Dictionary<string, Parte>(), posicion);
+                var objeto = new Objeto(new Dictionary<string, Parte>(), posicion);
             Color4 color = new Color4(0.5f, 0.5f, 0.5f, 1.0f);
 
             foreach (var parteKV in data.partes)
@@ -154,6 +160,12 @@ namespace LetraU
             }
 
             return objeto;
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine($"❌ Archivo no encontrado: {path}");
+                return new Objeto(new Dictionary<string, Parte>(), posicion);
+            }
         }
     } 
 }
