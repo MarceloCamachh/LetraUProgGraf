@@ -26,7 +26,65 @@ namespace LetraU
             var objetos = new Dictionary<string, Objeto>();
             var objU = CargarObjetoDesdeJSON("letraU.json", new Vector3(-2f, 0f, 0f));
             objetos.Add("U1", objU);
+            var objU2 = CargarObjetoDesdeJSON("letraU.json", new Vector3(2f, 0f, 0f)); // misma forma, diferente posición
+            objetos.Add("U2", objU2);
+
             escenario = new Escenario(objetos, new Vector3(0, 0, 0));
+            //escenario = new Escenario(GenerarEscenario(), new Vector3(0, 0, 0));
+        }
+        protected override void OnUpdateFrame(FrameEventArgs e)
+        {
+            base.OnUpdateFrame(e);
+            var input = Keyboard.GetState();
+
+            var obj = escenario.GetObjeto("U1");
+
+            // 🔁 Movimiento con flechas
+            if (input.IsKeyDown(Key.Left))
+            {
+                var p = obj.Posicion;
+                p.X -= 0.05f;
+                obj.Posicion = p;
+            }
+            if (input.IsKeyDown(Key.Right))
+            {
+                var p = obj.Posicion;
+                p.X += 0.05f;
+                obj.Posicion = p;
+            }
+            if (input.IsKeyDown(Key.Up))
+            {
+                var p = obj.Posicion;
+                p.Y += 0.05f;
+                obj.Posicion = p;
+            }
+            if (input.IsKeyDown(Key.Down))
+            {
+                var p = obj.Posicion;
+                p.Y -= 0.05f;
+                obj.Posicion = p;
+            }
+
+            // 🔄 Rotación con R
+            if (input.IsKeyDown(Key.R))
+            {
+                obj.RotacionY += 2f;
+            }
+
+            // 🔍 Escalado con + y -
+            if (input.IsKeyDown(Key.Plus) || input.IsKeyDown(Key.KeypadPlus))
+            {
+                var s = obj.Escala;
+                s *= 1.05f;
+                obj.Escala = s;
+            }
+
+            if (input.IsKeyDown(Key.Minus) || input.IsKeyDown(Key.KeypadMinus))
+            {
+                var s = obj.Escala;
+                s *= 0.95f;
+                obj.Escala = s;
+            }
         }
 
         protected override void OnResize(EventArgs e)
@@ -41,7 +99,6 @@ namespace LetraU
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadIdentity();
         }
-
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
@@ -114,7 +171,7 @@ namespace LetraU
             return cara;
         }
 
-        private void DibujarEjes()
+     private void DibujarEjes()
         {
             GL.Begin(PrimitiveType.Lines);
 

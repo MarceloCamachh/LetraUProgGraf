@@ -13,7 +13,7 @@ namespace LetraU
     }
 
     public class ParteData
-    {
+    {     
         public List<List<List<float>>> poligonos { get; set; }
     }
 }

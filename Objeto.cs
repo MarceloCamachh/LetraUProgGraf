@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using OpenTK.Graphics;
 using OpenTK;
+using OpenTK.Graphics.OpenGL;
 
 namespace LetraU
 {
@@ -13,7 +14,9 @@ namespace LetraU
         public Dictionary<string, Parte> listaDePartes;
         private Vector3 centro;
         public Color4 color;
-
+        public Vector3 Posicion { get; set; } = Vector3.Zero;
+        public Vector3 Escala { get; set; } = Vector3.One;
+        public float RotacionY { get; set; } = 0f;
         public Objeto(Dictionary<string, Parte> list, Vector3 centro)
         {
             this.listaDePartes = list;
@@ -52,10 +55,20 @@ namespace LetraU
 
         public void Draw()
         {
-            foreach (var parte in this.listaDePartes.Values)
+            GL.PushMatrix();
+
+            // Aplica transformaciones
+            GL.Translate(Posicion);
+            GL.Rotate(RotacionY, 0f, 1f, 0f);
+            GL.Scale(Escala);
+
+            // Dibuja cada parte
+            foreach (var parte in listaDePartes.Values)
             {
                 parte.Draw();
             }
+
+            GL.PopMatrix();
         }
 
         public Vector3 CalcularCentroMasa()

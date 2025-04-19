@@ -37,7 +37,7 @@ namespace LetraU
             {
                 return this.centro;
             }
-
+            
             public void SetCentro(Vector3 centro)
             {
                 this.centro = centro;
