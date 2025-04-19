@@ -32,60 +32,94 @@ namespace LetraU
             escenario = new Escenario(objetos, new Vector3(0, 0, 0));
             //escenario = new Escenario(GenerarEscenario(), new Vector3(0, 0, 0));
         }
+        private bool moverTodo = false; // cambia con la tecla T
+
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
             var input = Keyboard.GetState();
 
-            var obj = escenario.GetObjeto("U1");
-
-            // 🔁 Movimiento con flechas
-            if (input.IsKeyDown(Key.Left))
+            // Alternar entre mover un objeto o todos
+            if (input.IsKeyDown(Key.T))
             {
-                var p = obj.Posicion;
-                p.X -= 0.05f;
-                obj.Posicion = p;
-            }
-            if (input.IsKeyDown(Key.Right))
-            {
-                var p = obj.Posicion;
-                p.X += 0.05f;
-                obj.Posicion = p;
-            }
-            if (input.IsKeyDown(Key.Up))
-            {
-                var p = obj.Posicion;
-                p.Y += 0.05f;
-                obj.Posicion = p;
-            }
-            if (input.IsKeyDown(Key.Down))
-            {
-                var p = obj.Posicion;
-                p.Y -= 0.05f;
-                obj.Posicion = p;
+                moverTodo = !moverTodo;
+                Console.WriteLine(moverTodo ? "🔁 Modo ESCENARIO activado" : "🎯 Modo OBJETO activado");
+                System.Threading.Thread.Sleep(200); // evitar múltiples toques
             }
 
-            // 🔄 Rotación con R
-            if (input.IsKeyDown(Key.R))
-            {
-                obj.RotacionY += 2f;
-            }
+            var objetos = moverTodo ? escenario.GetObjetos() : new List<Objeto> { escenario.GetObjeto("U1") };
 
-            // 🔍 Escalado con + y -
-            if (input.IsKeyDown(Key.Plus) || input.IsKeyDown(Key.KeypadPlus))
+            foreach (var obj in objetos)
             {
-                var s = obj.Escala;
-                s *= 1.05f;
-                obj.Escala = s;
-            }
+                // Movimiento
+                if (input.IsKeyDown(Key.Left))
+                {
+                    var p = obj.Posicion;
+                    p.X -= 0.05f;
+                    obj.Posicion = p;
+                }
+                if (input.IsKeyDown(Key.Right))
+                {
+                    var p = obj.Posicion;
+                    p.X += 0.05f;
+                    obj.Posicion = p;
+                }
+                if (input.IsKeyDown(Key.Up))
+                {
+                    var p = obj.Posicion;
+                    p.Y += 0.05f;
+                    obj.Posicion = p;
+                }
+                if (input.IsKeyDown(Key.Down))
+                {
+                    var p = obj.Posicion;
+                    p.Y -= 0.05f;
+                    obj.Posicion = p;
+                }
+                if (input.IsKeyDown(Key.W)) // mover hacia adelante
+                {
+                    var p = obj.Posicion;
+                    p.Z -= 0.05f;
+                    obj.Posicion = p;
+                }
+                if (input.IsKeyDown(Key.S)) // mover hacia atrás
+                {
+                    var p = obj.Posicion;
+                    p.Z += 0.05f;
+                    obj.Posicion = p;
+                }
 
-            if (input.IsKeyDown(Key.Minus) || input.IsKeyDown(Key.KeypadMinus))
-            {
-                var s = obj.Escala;
-                s *= 0.95f;
-                obj.Escala = s;
+                // Rotaciones
+                if (input.IsKeyDown(Key.R))
+                {
+                    obj.RotacionY += 2f;
+                }
+                if (input.IsKeyDown(Key.X))
+                {
+                    obj.RotacionX += 2f;
+                }
+                if (input.IsKeyDown(Key.Z))
+                {
+                    obj.RotacionZ += 2f;
+                }
+
+                // Escalado
+                if (input.IsKeyDown(Key.Plus) || input.IsKeyDown(Key.KeypadPlus))
+                {
+                    var s = obj.Escala;
+                    s *= 1.05f;
+                    obj.Escala = s;
+                }
+                if (input.IsKeyDown(Key.Minus) || input.IsKeyDown(Key.KeypadMinus))
+                {
+                    var s = obj.Escala;
+                    s *= 0.95f;
+                    obj.Escala = s;
+                }
             }
         }
+
+
 
         protected override void OnResize(EventArgs e)
         {
@@ -198,7 +232,7 @@ namespace LetraU
                 EscenarioData data = JsonConvert.DeserializeObject<EscenarioData>(json);
 
                 var objeto = new Objeto(new Dictionary<string, Parte>(), posicion);
-            Color4 color = new Color4(0.5f, 0.5f, 0.5f, 1.0f);
+                Color4 color = new Color4(0.5f, 0.5f, 0.5f, 1.0f);
 
             foreach (var parteKV in data.partes)
             {

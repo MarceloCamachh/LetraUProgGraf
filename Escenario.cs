@@ -17,6 +17,7 @@ namespace LetraU
             private Vector3 centro;
             private Dictionary<string, Objeto> listaDeObjetos;
 
+
             public Escenario(Dictionary<string, Objeto> list, Vector3 centro)
             {
                 this.listaDeObjetos = list;
@@ -54,7 +55,10 @@ namespace LetraU
                     objeto.Draw();
                 }
             }
-
+            public IEnumerable<Objeto> GetObjetos()
+            {
+                return listaDeObjetos.Values;
+            }
             public Vector3 CalcularCentroMasa()
             {
                 Vector3 sumaCentros = Vector3.Zero;

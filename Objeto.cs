@@ -17,6 +17,9 @@ namespace LetraU
         public Vector3 Posicion { get; set; } = Vector3.Zero;
         public Vector3 Escala { get; set; } = Vector3.One;
         public float RotacionY { get; set; } = 0f;
+        public float RotacionX { get; set; } = 0f;
+        public float RotacionZ { get; set; } = 0f;
+
         public Objeto(Dictionary<string, Parte> list, Vector3 centro)
         {
             this.listaDePartes = list;
@@ -57,12 +60,12 @@ namespace LetraU
         {
             GL.PushMatrix();
 
-            // Aplica transformaciones
             GL.Translate(Posicion);
-            GL.Rotate(RotacionY, 0f, 1f, 0f);
+            GL.Rotate(RotacionX, 1f, 0f, 0f); // Rotación X
+            GL.Rotate(RotacionY, 0f, 1f, 0f); // Rotación Y
+            GL.Rotate(RotacionZ, 0f, 0f, 1f); // Rotación Z
             GL.Scale(Escala);
 
-            // Dibuja cada parte
             foreach (var parte in listaDePartes.Values)
             {
                 parte.Draw();
