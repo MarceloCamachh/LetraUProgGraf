@@ -13,6 +13,9 @@ namespace LetraU
     public class Game : GameWindow
     {
         private Escenario escenario;
+        private Parte parteSeleccionada = null;
+        private List<Parte> partesDisponibles = new List<Parte>();
+        private int indiceParte = 0;
 
         public Game(int width, int height)
             : base(width, height, GraphicsMode.Default, "Tarea Letra U")
@@ -24,13 +27,24 @@ namespace LetraU
             base.OnLoad(e);
             GL.ClearColor(0.0f, 0.0f, 0.5f, 1.0f);
             var objetos = new Dictionary<string, Objeto>();
-            var objU = CargarObjetoDesdeJSON("letraU.json", new Vector3(-2f, 0f, 0f));
+            var objU = CargarObjetoDesdeJSON("letraU.json", new Vector3(-1f, 0f, 0f));
             objetos.Add("U1", objU);
-            var objU2 = CargarObjetoDesdeJSON("letraU.json", new Vector3(2f, 0f, 0f)); // misma forma, diferente posición
+            var objU2 = CargarObjetoDesdeJSON("letraU.json", new Vector3(1f, 0f, 0f)); // misma forma, diferente posición
             objetos.Add("U2", objU2);
-
+           
             escenario = new Escenario(objetos, new Vector3(0, 0, 0));
             //escenario = new Escenario(GenerarEscenario(), new Vector3(0, 0, 0));
+            partesDisponibles = new List<Parte>();
+
+            // Recorremos todos los objetos y agregamos sus partes a la lista
+            foreach (var obj in escenario.GetObjetos())
+            {
+                partesDisponibles.AddRange(obj.listaDePartes.Values);
+            }
+
+            parteSeleccionada = partesDisponibles[0];
+            Console.WriteLine("Parte seleccionada: 0");
+
         }
         private bool moverTodo = false; // cambia con la tecla T
 
@@ -39,85 +53,86 @@ namespace LetraU
             base.OnUpdateFrame(e);
             var input = Keyboard.GetState();
 
-            // Alternar entre mover un objeto o todos
+            // Cambiar modo entre "Mover Todo" o "Parte Seleccionada"
             if (input.IsKeyDown(Key.T))
             {
                 moverTodo = !moverTodo;
-                Console.WriteLine(moverTodo ? "🔁 Modo ESCENARIO activado" : "🎯 Modo OBJETO activado");
-                System.Threading.Thread.Sleep(200); // evitar múltiples toques
+                Console.WriteLine(moverTodo ? "🔁 Modo ESCENARIO activado" : "🎯 Modo PARTE seleccionada");
+                System.Threading.Thread.Sleep(200);
             }
 
-            var objetos = moverTodo ? escenario.GetObjetos() : new List<Objeto> { escenario.GetObjeto("U1") };
-
-            foreach (var obj in objetos)
+            // Cambiar la parte seleccionada solo si estás en modo parte
+            if (!moverTodo && input.IsKeyDown(Key.P))
             {
-                // Movimiento
-                if (input.IsKeyDown(Key.Left))
-                {
-                    var p = obj.Posicion;
-                    p.X -= 0.05f;
-                    obj.Posicion = p;
-                }
-                if (input.IsKeyDown(Key.Right))
-                {
-                    var p = obj.Posicion;
-                    p.X += 0.05f;
-                    obj.Posicion = p;
-                }
-                if (input.IsKeyDown(Key.Up))
-                {
-                    var p = obj.Posicion;
-                    p.Y += 0.05f;
-                    obj.Posicion = p;
-                }
-                if (input.IsKeyDown(Key.Down))
-                {
-                    var p = obj.Posicion;
-                    p.Y -= 0.05f;
-                    obj.Posicion = p;
-                }
-                if (input.IsKeyDown(Key.W)) // mover hacia adelante
-                {
-                    var p = obj.Posicion;
-                    p.Z -= 0.05f;
-                    obj.Posicion = p;
-                }
-                if (input.IsKeyDown(Key.S)) // mover hacia atrás
-                {
-                    var p = obj.Posicion;
-                    p.Z += 0.05f;
-                    obj.Posicion = p;
-                }
+                indiceParte = (indiceParte + 1) % partesDisponibles.Count;
+                parteSeleccionada = partesDisponibles[indiceParte];
+                Console.WriteLine($"Parte seleccionada: {indiceParte}");
+                System.Threading.Thread.Sleep(200);
+            }
 
-                // Rotaciones
-                if (input.IsKeyDown(Key.R))
+            if (moverTodo)
+            {
+                // 🔹 Transformar TODOS los polígonos de todos los objetos
+                foreach (var obj in escenario.GetObjetos())
                 {
-                    obj.RotacionY += 2f;
+                    foreach (var parte in obj.listaDePartes.Values)
+                    {
+                        foreach (var poligono in parte.listaDePoligonos.Values)
+                        {
+                            AplicarTransformaciones(poligono, input);
+                        }
+                    }
                 }
-                if (input.IsKeyDown(Key.X))
+            }
+            else
+            {
+                // 🔹 Transformar SOLO la parte seleccionada
+                if (parteSeleccionada != null)
                 {
-                    obj.RotacionX += 2f;
-                }
-                if (input.IsKeyDown(Key.Z))
-                {
-                    obj.RotacionZ += 2f;
-                }
-
-                // Escalado
-                if (input.IsKeyDown(Key.Plus) || input.IsKeyDown(Key.KeypadPlus))
-                {
-                    var s = obj.Escala;
-                    s *= 1.05f;
-                    obj.Escala = s;
-                }
-                if (input.IsKeyDown(Key.Minus) || input.IsKeyDown(Key.KeypadMinus))
-                {
-                    var s = obj.Escala;
-                    s *= 0.95f;
-                    obj.Escala = s;
+                    foreach (var poligono in parteSeleccionada.listaDePoligonos.Values)
+                    {
+                        AplicarTransformaciones(poligono, input);
+                    }
                 }
             }
         }
+        private void AplicarTransformaciones(Poligono poligono, KeyboardState input)
+        {
+            // Movimiento
+            var pos = poligono.Posicion;
+
+            if (input.IsKeyDown(Key.Left))
+                pos.X -= 0.05f;
+            if (input.IsKeyDown(Key.Right))
+                pos.X += 0.05f;
+            if (input.IsKeyDown(Key.Up))
+                pos.Y += 0.05f;
+            if (input.IsKeyDown(Key.Down))
+                pos.Y -= 0.05f;
+            if (input.IsKeyDown(Key.W))
+                pos.Z -= 0.05f;
+            if (input.IsKeyDown(Key.S))
+                pos.Z += 0.05f;
+
+            poligono.Posicion = pos;
+
+            // Rotaciones
+            if (input.IsKeyDown(Key.R))
+                poligono.RotacionY += 2f;
+            if (input.IsKeyDown(Key.X))
+                poligono.RotacionX += 2f;
+            if (input.IsKeyDown(Key.Z))
+                poligono.RotacionZ += 2f;
+
+            // Escalado
+            if (input.IsKeyDown(Key.Plus) || input.IsKeyDown(Key.KeypadPlus))
+                poligono.Escala *= 1.05f;
+
+            if (input.IsKeyDown(Key.Minus) || input.IsKeyDown(Key.KeypadMinus))
+                poligono.Escala *= 0.95f;
+        }
+
+
 
 
 

@@ -14,7 +14,11 @@ namespace LetraU
         public List<Vector3> listaDeVertices;
         public Color4 color;
         private Vector3 centro;
-
+        public Vector3 Posicion { get; set; } = Vector3.Zero;
+        public Vector3 Escala { get; set; } = Vector3.One;
+        public float RotacionX { get; set; } = 0f;
+        public float RotacionY { get; set; } = 0f;
+        public float RotacionZ { get; set; } = 0f;
         public Poligono(Color4 color)
         {
             this.listaDeVertices = new List<Vector3>();
@@ -44,16 +48,26 @@ namespace LetraU
 
         public void Draw()
         {
+            GL.PushMatrix();
+
+            GL.Translate(Posicion);
+            GL.Rotate(RotacionX, 1f, 0f, 0f);
+            GL.Rotate(RotacionY, 0f, 1f, 0f);
+            GL.Rotate(RotacionZ, 0f, 0f, 1f);
+            GL.Scale(Escala);
+
             GL.Color4(color);
             GL.Begin(PrimitiveType.Quads);
 
-            foreach (Vector3 v in this.listaDeVertices)
+            foreach (Vector3 v in listaDeVertices)
             {
                 GL.Vertex3(v);
             }
 
             GL.End();
+            GL.PopMatrix();
         }
+
 
         private Vector3 MinVertice()
         {
