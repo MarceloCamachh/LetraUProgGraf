@@ -13,9 +13,22 @@ namespace LetraU
     public class Game : GameWindow
     {
         private Escenario escenario;
-        private Parte parteSeleccionada = null;
+        private Parte parteSeleccionada = null;                                     //MOVER OBJETO 
         private List<Parte> partesDisponibles = new List<Parte>();
         private int indiceParte = 0;
+        private bool moverTodo = false; // cambia con la tecla T
+
+        private bool moverObjeto = false;
+        private List<Objeto> objetosDisponibles = new List<Objeto>();               //MOVER OBJETO
+        private int indiceObjeto = 0;
+        private Objeto objetoSeleccionado = null;
+
+
+        public static Parte ParteSeleccionadaGlobal { get; private set; }
+        public static bool ModoEscenarioActivo { get; private set; }
+
+        public static bool ModoObjetoActivo { get; private set; }
+        public static Objeto ObjetoSeleccionadoGlobal { get; private set; }
 
         public Game(int width, int height)
             : base(width, height, GraphicsMode.Default, "Tarea Letra U")
@@ -33,9 +46,8 @@ namespace LetraU
             objetos.Add("U2", objU2);
            
             escenario = new Escenario(objetos, new Vector3(0, 0, 0));
-            //escenario = new Escenario(GenerarEscenario(), new Vector3(0, 0, 0));
-            partesDisponibles = new List<Parte>();
 
+            partesDisponibles = new List<Parte>();
             // Recorremos todos los objetos y agregamos sus partes a la lista
             foreach (var obj in escenario.GetObjetos())
             {
@@ -45,14 +57,20 @@ namespace LetraU
             parteSeleccionada = partesDisponibles[0];
             Console.WriteLine("Parte seleccionada: 0");
 
+
+            objetosDisponibles = new List<Objeto>(escenario.GetObjetos());
+            objetoSeleccionado = objetosDisponibles[0];
+            Console.WriteLine("Objeto seleccionado: 0");
         }
-        private bool moverTodo = false; // cambia con la tecla T
 
         protected override void OnUpdateFrame(FrameEventArgs e)
         {
             base.OnUpdateFrame(e);
             var input = Keyboard.GetState();
-
+            ParteSeleccionadaGlobal = parteSeleccionada;
+            ModoEscenarioActivo = moverTodo;
+            ModoObjetoActivo = moverObjeto;
+            ObjetoSeleccionadoGlobal = objetoSeleccionado;
             // Cambiar modo entre "Mover Todo" o "Parte Seleccionada"
             if (input.IsKeyDown(Key.T))
             {
@@ -61,7 +79,7 @@ namespace LetraU
                 System.Threading.Thread.Sleep(200);
             }
 
-            // Cambiar la parte seleccionada solo si estás en modo parte
+            // Cambiar la parte seleccionada solo si estás en MODO PARTE
             if (!moverTodo && input.IsKeyDown(Key.P))
             {
                 indiceParte = (indiceParte + 1) % partesDisponibles.Count;
@@ -84,7 +102,19 @@ namespace LetraU
                     }
                 }
             }
-            else
+            else if (moverObjeto)
+            {
+                if (objetoSeleccionado != null)
+                {
+                    foreach (var parte in objetoSeleccionado.listaDePartes.Values)
+                    {
+                        foreach (var poligono in parte.listaDePoligonos.Values)
+                        {
+                            AplicarTransformaciones(poligono, input);
+                        }
+                    }
+                }
+            } else
             {
                 // 🔹 Transformar SOLO la parte seleccionada
                 if (parteSeleccionada != null)
@@ -95,12 +125,65 @@ namespace LetraU
                     }
                 }
             }
+
+            //eliminar parte seleccionada
+            if (!moverTodo && input.IsKeyDown(Key.Delete))
+            {
+                foreach (var obj in escenario.GetObjetos())
+                {
+                    if (obj.listaDePartes.ContainsValue(parteSeleccionada))
+                    {
+                        string clave = null;
+                        foreach (var kvp in obj.listaDePartes)
+                        {
+                            if (kvp.Value == parteSeleccionada)
+                            {
+                                clave = kvp.Key;
+                                break;
+                            }
+                        }
+                        if (clave != null)
+                        {
+                            obj.listaDePartes.Remove(clave);
+                            partesDisponibles.Remove(parteSeleccionada);
+                            Console.WriteLine($"❌ Parte '{clave}' eliminada");
+                            indiceParte = 0;
+                            parteSeleccionada = partesDisponibles.Count > 0 ? partesDisponibles[0] : null;
+                        }
+                        break;
+                    }
+                }
+                System.Threading.Thread.Sleep(200);
+            }
+
+            //guardar objeto transformado
+            if (input.IsKeyDown(Key.G))
+            {
+                GuardarEscenario("escenario_guardado.json");
+                System.Threading.Thread.Sleep(300);
+            }
+
+            // Cambiar a modo Objeto
+            if (input.IsKeyDown(Key.O))  
+            {
+                moverObjeto = !moverObjeto;
+                moverTodo = false;
+                Console.WriteLine(moverObjeto ? "🟥 Modo OBJETO activado" : "🎯 Modo PARTE activado");
+                System.Threading.Thread.Sleep(200);
+            }
+
+            if (moverObjeto && input.IsKeyDown(Key.M))
+            {
+                indiceObjeto = (indiceObjeto + 1) % objetosDisponibles.Count;
+                objetoSeleccionado = objetosDisponibles[indiceObjeto];
+                Console.WriteLine($"🟦 Objeto seleccionado: {indiceObjeto}");
+                System.Threading.Thread.Sleep(200);
+            }
         }
         private void AplicarTransformaciones(Poligono poligono, KeyboardState input)
         {
             // Movimiento
             var pos = poligono.Posicion;
-
             if (input.IsKeyDown(Key.Left))
                 pos.X -= 0.05f;
             if (input.IsKeyDown(Key.Right))
@@ -113,7 +196,6 @@ namespace LetraU
                 pos.Z -= 0.05f;
             if (input.IsKeyDown(Key.S))
                 pos.Z += 0.05f;
-
             poligono.Posicion = pos;
 
             // Rotaciones
@@ -124,12 +206,42 @@ namespace LetraU
             if (input.IsKeyDown(Key.Z))
                 poligono.RotacionZ += 2f;
 
+
+
             // Escalado
             if (input.IsKeyDown(Key.Plus) || input.IsKeyDown(Key.KeypadPlus))
                 poligono.Escala *= 1.05f;
 
             if (input.IsKeyDown(Key.Minus) || input.IsKeyDown(Key.KeypadMinus))
                 poligono.Escala *= 0.95f;
+
+
+            // Resetear transformaciones
+            if (input.IsKeyDown(Key.L))
+            {
+                poligono.Posicion = Vector3.Zero;
+                poligono.RotacionX = 0f;
+                poligono.RotacionY = 0f;
+                poligono.RotacionZ = 0f;
+                poligono.Escala = Vector3.One;
+                poligono.color = new Color4(0.5f, 0.5f, 0.5f, 1.0f);
+                //Console.WriteLine("🔄 Transformaciones reseteadas");
+                // System.Threading.Thread.Sleep(200);
+            }
+
+            // Cambiar color
+            if (input.IsKeyDown(Key.C))
+            {
+                Random rnd = new Random();
+                poligono.SetColor(new Color4(
+                    (float)rnd.NextDouble(),
+                    (float)rnd.NextDouble(),
+                    (float)rnd.NextDouble(),
+                    1.0f
+                ));
+                Console.WriteLine("🎨 Color cambiado aleatoriamente");
+                //System.Threading.Thread.Sleep(200);
+            }
         }
 
 
@@ -164,60 +276,6 @@ namespace LetraU
 
             DibujarEjes();
             SwapBuffers();
-        }
-
-        private Dictionary<string, Objeto> GenerarEscenario()
-        {
-            var objetos = new Dictionary<string, Objeto>();
-            var objetoU = GenerarLetraU(new Vector3(-2f, 0f, 0f));
-            objetos.Add("U1", objetoU);
-            return objetos;
-        }
-
-        private Objeto GenerarLetraU(Vector3 posicion)
-        {
-            var objeto = new Objeto(new Dictionary<string, Parte>(), posicion);
-            Color4 color = new Color4(0.5f, 0.5f, 0.5f, 1f);
-
-            objeto.AddParte("izquierda", CrearCaja(-0.8f, -0.8f, 0.3f, -0.4f, 1.2f, -0.3f, color));
-            objeto.AddParte("derecha", CrearCaja(0.4f, -0.8f, 0.3f, 0.8f, 1.2f, -0.3f, color));
-            objeto.AddParte("base", CrearCaja(-0.8f, -1.2f, 0.3f, 0.8f, -0.8f, -0.3f, color));
-
-            return objeto;
-        }
-
-        private Parte CrearCaja(float x1, float y1, float z1, float x2, float y2, float z2, Color4 color)
-        {
-            Parte parte = new Parte();
-
-            Vector3[] v = new Vector3[8];
-            v[0] = new Vector3(x1, y2, z1);
-            v[1] = new Vector3(x2, y2, z1);
-            v[2] = new Vector3(x2, y1, z1);
-            v[3] = new Vector3(x1, y1, z1);
-            v[4] = new Vector3(x1, y2, z2);
-            v[5] = new Vector3(x2, y2, z2);
-            v[6] = new Vector3(x2, y1, z2);
-            v[7] = new Vector3(x1, y1, z2);
-
-            parte.Add("frente", CrearCara(v[0], v[1], v[2], v[3], color));
-            parte.Add("atras", CrearCara(v[4], v[5], v[6], v[7], color));
-            parte.Add("izquierda", CrearCara(v[0], v[4], v[7], v[3], color));
-            parte.Add("derecha", CrearCara(v[1], v[5], v[6], v[2], color));
-            parte.Add("superior", CrearCara(v[0], v[1], v[5], v[4], color));
-            parte.Add("inferior", CrearCara(v[3], v[2], v[6], v[7], color));
-
-            return parte;
-        }
-
-        private Poligono CrearCara(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color4 color)
-        {
-            var cara = new Poligono(color);
-            cara.Add(a);
-            cara.Add(b);
-            cara.Add(c);
-            cara.Add(d);
-            return cara;
         }
 
      private void DibujarEjes()
@@ -273,5 +331,42 @@ namespace LetraU
                 return new Objeto(new Dictionary<string, Parte>(), posicion);
             }
         }
-    } 
+        private void GuardarEscenario(string ruta)
+        {
+            var exportData = new Dictionary<string, List<PoligonoDataExport>>();
+
+            foreach (var objeto in escenario.GetObjetos())
+            {
+                foreach (var parte in objeto.listaDePartes.Values)
+                {
+                    foreach (var poligono in parte.listaDePoligonos.Values)
+                    {
+                        var poligonoExport = new PoligonoDataExport
+                        {
+                            Vertices = poligono.listaDeVertices.ConvertAll(v => new Vector3Serializable(v)),
+                            Posicion = new Vector3Serializable(poligono.Posicion),
+                            Escala = new Vector3Serializable(poligono.Escala),
+                            RotacionX = poligono.RotacionX,
+                            RotacionY = poligono.RotacionY,
+                            RotacionZ = poligono.RotacionZ,
+                            Color = $"{poligono.color.R},{poligono.color.G},{poligono.color.B},{poligono.color.A}"
+                        };
+
+                        string claveParte = parte.GetHashCode().ToString();  // O usa el nombre si tienes
+
+                        if (!exportData.ContainsKey(claveParte))
+                            exportData[claveParte] = new List<PoligonoDataExport>();
+
+                        exportData[claveParte].Add(poligonoExport);
+                    }
+                }
+            }
+
+            string json = JsonConvert.SerializeObject(exportData, Formatting.Indented);
+            File.WriteAllText(ruta, json);
+            Console.WriteLine($"✅ Escenario guardado en: {ruta}");
+        }
+
+
+    }
 }

@@ -59,9 +59,11 @@ namespace LetraU
             GL.PushMatrix();
             GL.Translate(Posicion);
 
+            bool esSeleccionado = Game.ModoObjetoActivo && this == Game.ObjetoSeleccionadoGlobal;
+
             foreach (var parte in listaDePartes.Values)
             {
-                parte.Draw();
+                parte.Draw(esSeleccionado);  // 👉 Le pasamos si debe resaltar
             }
 
             GL.PopMatrix();

@@ -19,6 +19,7 @@ namespace LetraU
         public float RotacionX { get; set; } = 0f;
         public float RotacionY { get; set; } = 0f;
         public float RotacionZ { get; set; } = 0f;
+
         public Poligono(Color4 color)
         {
             this.listaDeVertices = new List<Vector3>();
@@ -46,7 +47,7 @@ namespace LetraU
             this.centro = CalcularCentroMasa();
         }
 
-        public void Draw()
+        public void Draw(bool resaltarObjeto)
         {
             GL.PushMatrix();
 
@@ -56,18 +57,25 @@ namespace LetraU
             GL.Rotate(RotacionZ, 0f, 0f, 1f);
             GL.Scale(Escala);
 
-            GL.Color4(color);
-            GL.Begin(PrimitiveType.Quads);
+            if (resaltarObjeto || Game.ModoEscenarioActivo || EsParteSeleccionada())
+                GL.Color4(Color4.Red);
+            else
+                GL.Color4(color);
 
+            GL.Begin(PrimitiveType.Quads);
             foreach (Vector3 v in listaDeVertices)
             {
                 GL.Vertex3(v);
             }
-
             GL.End();
+
             GL.PopMatrix();
         }
-
+        private bool EsParteSeleccionada()
+        {
+            return Game.ParteSeleccionadaGlobal != null &&
+                   Game.ParteSeleccionadaGlobal.listaDePoligonos.ContainsValue(this);
+        }
 
         private Vector3 MinVertice()
         {

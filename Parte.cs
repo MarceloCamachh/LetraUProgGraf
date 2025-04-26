@@ -64,11 +64,11 @@ namespace LetraU
             return suma;
         }
 
-        public void Draw()
+        public void Draw(bool resaltarObjeto)
         {
-            foreach (var poligono in this.listaDePoligonos.Values)
+            foreach (var poligono in listaDePoligonos.Values)
             {
-                poligono.Draw();
+                poligono.Draw(resaltarObjeto);
             }
         }
 

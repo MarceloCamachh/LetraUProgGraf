@@ -56,6 +56,7 @@
     <Compile Include="Game.cs" />
     <Compile Include="Objeto.cs" />
     <Compile Include="Parte.cs" />
+    <Compile Include="PoligonoDataExport.cs" />
     <Compile Include="Poligonos.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
