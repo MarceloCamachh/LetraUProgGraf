@@ -73,7 +73,8 @@ namespace LetraU
         }
         private bool EsParteSeleccionada()
         {
-            return Game.ParteSeleccionadaGlobal != null &&
+            return !Game.ModoObjetoActivo &&   // Solo resaltar si NO estás en modo objeto
+                   Game.ParteSeleccionadaGlobal != null &&
                    Game.ParteSeleccionadaGlobal.listaDePoligonos.ContainsValue(this);
         }
 
